@@ -19,8 +19,10 @@ public class Player {
     @Column(name = "title")
     String title;
     @Column(name = "race")
+    @Enumerated(EnumType.STRING)
     Race race;
     @Column(name = "profession")
+    @Enumerated(EnumType.STRING)
     Profession profession;
     @Column(name = "birthday")
     Date birthday;
