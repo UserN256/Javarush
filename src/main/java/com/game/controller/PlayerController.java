@@ -6,7 +6,7 @@ public class PlayerController {
 */
 
 import java.util.ArrayList;
-//import java.util.Date;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,9 +56,17 @@ public class PlayerController {
         }
     }
 
-    @PostMapping("/players")
+    @PostMapping("/rest/players")
     public ResponseEntity<Player> createPlayer(@RequestBody Player player) {
+        Date dateLow = new Date(100,01,01);
+        Date dateHi = new Date(1100,01,01);
+
         try {
+            if (player == null || player.getBirthday().before(dateLow) || dateHi.before(player.getBirthday()))
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            if (( player.getExperience() <0) || (player.getExperience() > 10000000))
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            if (player.getName().equals("")) return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             Player _player = playerRepository
 //                    .save(new Player(player.getTitle(), player.getName(), false));
                     .save(new Player(player.getName(), player.getTitle(), player.getRace(),
