@@ -47,7 +47,7 @@ public class PlayerController {
             Profession profession = null;
             Long after;
             Long before;
-            Boolean banned;
+            Boolean banned = false;
             Integer minExperience;
             Integer maxExperience;
             Integer minLevel;
@@ -83,17 +83,19 @@ public class PlayerController {
             title = allParams.get("title");*/
 //            if (allParams.get("race")!= null) race = Race.valueOf(allParams.get("race"));
 //            if (allParams.get("profession")!= null) profession = Profession.valueOf(allParams.get("profession"));
-            if (allParams.get("after") != null) after = Long.parseLong(allParams.get("after"));
+/*            if (allParams.get("after") != null) after = Long.parseLong(allParams.get("after"));
             if (allParams.get("before") != null) before = Long.parseLong(allParams.get("before"));
-            banned = Boolean.parseBoolean(allParams.get("banned"));
+//            banned = Boolean.parseBoolean(allParams.get("banned"));
             if (allParams.get("minExperience") != null)
                 minExperience = Integer.parseInt(allParams.get("minExperience"));
             if (allParams.get("maxExperience") != null)
                 maxExperience = Integer.parseInt(allParams.get("maxExperience"));
             if (allParams.get("minLevel") != null) minLevel = Integer.parseInt(allParams.get("minLevel"));
-            if (allParams.get("maxLevel") != null) maxLevel = Integer.parseInt(allParams.get("maxLevel"));
+            if (allParams.get("maxLevel") != null) maxLevel = Integer.parseInt(allParams.get("maxLevel"));*/
             if (allParams.get("pageNumber") != null) pageNumber = Integer.parseInt(allParams.get("pageNumber"));
+            else pageNumber = 0;
             if (allParams.get("pageSize") != null) pageSize = Integer.parseInt(allParams.get("pageSize"));
+            else pageSize = 3;
 
             playerStream = players.stream();
             if ((name = allParams.get("name")) != null)
@@ -118,17 +120,23 @@ public class PlayerController {
                 Date tmpDate = new Date(Long.parseLong(tmpString) + 1000);
                 playerStream = playerStream.filter(p -> p.getBirthday().before(tmpDate));
             }
+            if (allParams.get("banned") != null) playerStream = playerStream.filter(p -> p.isBanned() == banned);
+            if (allParams.get("minExperience") != null) playerStream = playerStream
+                    .filter(p -> p.getExperience() >= Integer.parseInt(allParams.get("minExperience")));
+            if (allParams.get("maxExperience") != null) playerStream = playerStream
+                    .filter(p -> p.getExperience() <= Integer.parseInt(allParams.get("minExperience")));
 
-            playerStream = playerStream.filter(p -> p.isBanned() == banned);
-            if (allParams.get("minLevel") != null) playerStream = playerStream.filter(p -> p.getLevel() > Integer.parseInt(allParams.get("minLevel")));
-            if (allParams.get("maxLevel") != null) playerStream = playerStream.filter(p -> p.getLevel() < Integer.parseInt(allParams.get("maxLevel")));
+            if (allParams.get("minLevel") != null)
+                playerStream = playerStream.filter(p -> p.getLevel() > Integer.parseInt(allParams.get("minLevel")));
+            if (allParams.get("maxLevel") != null)
+                playerStream = playerStream.filter(p -> p.getLevel() < Integer.parseInt(allParams.get("maxLevel")));
 
 
             // PAGING
-            if (allParams.get("pageNumber") != null && allParams.get("pageSize") != null) {
-                playerStream = playerStream.skip((long) (pageNumber) * pageSize);
-                playerStream = playerStream.limit(pageSize);
-            }
+
+            playerStream = playerStream.skip((long) (pageNumber) * pageSize);
+            playerStream = playerStream.limit(pageSize);
+
             players = playerStream.collect(Collectors.toList());
             if (players.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
