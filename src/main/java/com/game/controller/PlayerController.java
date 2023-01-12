@@ -33,7 +33,7 @@ public class PlayerController {
     PlayerRepository playerRepository;
 
     @GetMapping("/rest/players")
-    public ResponseEntity<List<Player>> getAllPlayers(@RequestParam Map<String,String> allParams) {
+    public ResponseEntity<List<Player>> getAllPlayers(@RequestParam Map<String, String> allParams) {
         // allParams - if view sends us parameters like sort, order, etc.
         try {
             // DECLARATIONS
@@ -52,8 +52,8 @@ public class PlayerController {
             Integer maxExperience;
             Integer minLevel;
             Integer maxLevel;
-            Integer pageNumber;
-            Integer pageSize;
+            Integer pageNumber = 0;
+            Integer pageSize = 0;
 
             System.out.println("Allparams: " + allParams.entrySet()); // some debug
 
@@ -61,7 +61,7 @@ public class PlayerController {
 
             // SORTING VIEW
             order = allParams.get("order"); // get sorting order
-            if ( order != null) // sort according to order received
+            if (order != null) // sort according to order received
                 switch (order) {
                     case "ID":
                         Collections.sort(players, Comparator.comparing(Player::getId));
@@ -83,20 +83,24 @@ public class PlayerController {
             title = allParams.get("title");*/
 //            if (allParams.get("race")!= null) race = Race.valueOf(allParams.get("race"));
 //            if (allParams.get("profession")!= null) profession = Profession.valueOf(allParams.get("profession"));
-            if ( allParams.get("after")!= null) after = Long.parseLong(allParams.get("after"));
+            if (allParams.get("after") != null) after = Long.parseLong(allParams.get("after"));
             if (allParams.get("before") != null) before = Long.parseLong(allParams.get("before"));
             banned = Boolean.parseBoolean(allParams.get("banned"));
-            if (allParams.get("minExperience") != null) minExperience = Integer.parseInt(allParams.get("minExperience"));
-            if (allParams.get("maxExperience") != null) maxExperience = Integer.parseInt(allParams.get("maxExperience"));
+            if (allParams.get("minExperience") != null)
+                minExperience = Integer.parseInt(allParams.get("minExperience"));
+            if (allParams.get("maxExperience") != null)
+                maxExperience = Integer.parseInt(allParams.get("maxExperience"));
             if (allParams.get("minLevel") != null) minLevel = Integer.parseInt(allParams.get("minLevel"));
             if (allParams.get("maxLevel") != null) maxLevel = Integer.parseInt(allParams.get("maxLevel"));
-            if (allParams.get("pageNumber") != null ) pageNumber = Integer.parseInt(allParams.get("pageNumber"));
-            if (allParams.get("pageSize") != null)pageSize = Integer.parseInt(allParams.get("pageSize"));
+            if (allParams.get("pageNumber") != null) pageNumber = Integer.parseInt(allParams.get("pageNumber"));
+            if (allParams.get("pageSize") != null) pageSize = Integer.parseInt(allParams.get("pageSize"));
 
             playerStream = players.stream();
-            if ( (name = allParams.get("name")) != null) playerStream = playerStream.filter(p -> p.getName().contains(name));
-            if ( (title = allParams.get("title")) != null) playerStream = playerStream.filter(p -> p.getTitle().contains(title));
-            if ( allParams.get("race") != null) {
+            if ((name = allParams.get("name")) != null)
+                playerStream = playerStream.filter(p -> p.getName().contains(name));
+            if ((title = allParams.get("title")) != null)
+                playerStream = playerStream.filter(p -> p.getTitle().contains(title));
+            if (allParams.get("race") != null) {
                 Race finalRace = Race.valueOf(allParams.get("race"));
                 playerStream = playerStream.filter(p -> p.getRace().equals(finalRace));
             }
@@ -116,19 +120,15 @@ public class PlayerController {
             }
 
             playerStream = playerStream.filter(p -> p.isBanned() == banned);
-            /*if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));*/
+            if (allParams.get("minLevel") != null) playerStream = playerStream.filter(p -> p.getLevel() > Integer.parseInt(allParams.get("minLevel")));
+            if (allParams.get("maxLevel") != null) playerStream = playerStream.filter(p -> p.getLevel() < Integer.parseInt(allParams.get("maxLevel")));
 
-/*
-            for (Player player:players){
-                for (String str:allParams.keySet()){
 
-                }
-*/
-
+            // PAGING
+            if (allParams.get("pageNumber") != null && allParams.get("pageSize") != null) {
+                playerStream = playerStream.skip((long) (pageNumber) * pageSize);
+                playerStream = playerStream.limit(pageSize);
+            }
             players = playerStream.collect(Collectors.toList());
             if (players.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -139,7 +139,6 @@ public class PlayerController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
 
     @GetMapping("/rest/players/{id}")
@@ -155,14 +154,14 @@ public class PlayerController {
 
     @PostMapping("/rest/players")
     public ResponseEntity<Player> createPlayer(@RequestBody Player player) {
-        Date dateLow = new Date(100,01,01);
-        Date dateHi = new Date(1100,01,01);
+        Date dateLow = new Date(100, 01, 01);
+        Date dateHi = new Date(1100, 01, 01);
 
         try {
             if (player == null || player.getBirthday().before(dateLow) || dateHi.before(player.getBirthday())
-                    || player.getTitle().length()>12)
+                    || player.getTitle().length() > 12)
                 return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-            if (( player.getExperience() <0) || (player.getExperience() > 10000000))
+            if ((player.getExperience() < 0) || (player.getExperience() > 10000000))
                 return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             if (player.getName().equals("")) return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             Player _player = playerRepository
@@ -214,7 +213,7 @@ public class PlayerController {
     @GetMapping("/rest/players/count")
     public ResponseEntity<Integer> getSpecifiedPlayersCount(@RequestParam(required = false) String title) {
         try {
-            Integer res = (int)playerRepository.count();
+            Integer res = (int) playerRepository.count();
 
             if (res.equals(0)) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
