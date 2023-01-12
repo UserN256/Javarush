@@ -46,6 +46,7 @@ public class Player {
         this.profession = profession;
         this.birthday = birthday;
         this.experience = experience;
+        this.banned = false;
         this.level = calculateLevel(experience);
         this.untilNextLevel = calculateUntilNextLvl(experience);
     }
@@ -62,6 +63,19 @@ public class Player {
         this.level = calculateLevel(experience);
         this.untilNextLevel = calculateUntilNextLvl(experience);
     }
+
+/*    public Player(Long id, String name, String title, Race race, Profession profession, Date birthday, boolean banned, Integer experience, Integer level, Integer untilNextLevel) {
+        this.id = id;
+        this.name = name;
+        this.title = title;
+        this.race = race;
+        this.profession = profession;
+        this.birthday = birthday;
+        this.banned = banned;
+        this.experience = experience;
+        this.level = level;
+        this.untilNextLevel = untilNextLevel;
+    }*/
 
     public Integer calculateLevel(Integer experience){
         return (int)((Math.sqrt( 2500 + 200 * experience) - 50 ) / 100);
