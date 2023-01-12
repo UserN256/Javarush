@@ -77,47 +77,51 @@ public class PlayerController {
                         break;
                 }
 
-            name = allParams.get("name");
-            title = allParams.get("title");
-            if ( allParams.get("race")!= null) race = Race.valueOf(allParams.get("race"));
-            if (allParams.get("profession")!= null) profession = Profession.valueOf(allParams.get("profession"));
-            /*after = Long.parseLong(allParams.get("after"));
-            before = Long.parseLong(allParams.get("before"));
+            // FILTERING according to optional received params from allParams
+
+/*            name = allParams.get("name");
+            title = allParams.get("title");*/
+//            if (allParams.get("race")!= null) race = Race.valueOf(allParams.get("race"));
+//            if (allParams.get("profession")!= null) profession = Profession.valueOf(allParams.get("profession"));
+            if ( allParams.get("after")!= null) after = Long.parseLong(allParams.get("after"));
+            if (allParams.get("before") != null) before = Long.parseLong(allParams.get("before"));
             banned = Boolean.parseBoolean(allParams.get("banned"));
-            minExperience = Integer.parseInt(allParams.get("minExperience"));
-            maxExperience = Integer.parseInt(allParams.get("maxExperience"));
-            minLevel = Integer.parseInt(allParams.get("minLevel"));
-            maxLevel = Integer.parseInt(allParams.get("maxLevel"));
-            pageNumber = Integer.parseInt(allParams.get("pageNumber"));
-            pageSize = Integer.parseInt(allParams.get("pageSize"));*/
-
-            /*cars.stream()
-                    .filter(car -> Objects.nonNull(car))
-                    .filter(car -> Objects.nonNull(car.getName()))
-                    .filter(car -> car.getName().startsWith("M"))
-                    .collect(Collectors.toList());*/
-
+            if (allParams.get("minExperience") != null) minExperience = Integer.parseInt(allParams.get("minExperience"));
+            if (allParams.get("maxExperience") != null) maxExperience = Integer.parseInt(allParams.get("maxExperience"));
+            if (allParams.get("minLevel") != null) minLevel = Integer.parseInt(allParams.get("minLevel"));
+            if (allParams.get("maxLevel") != null) maxLevel = Integer.parseInt(allParams.get("maxLevel"));
+            if (allParams.get("pageNumber") != null ) pageNumber = Integer.parseInt(allParams.get("pageNumber"));
+            if (allParams.get("pageSize") != null)pageSize = Integer.parseInt(allParams.get("pageSize"));
 
             playerStream = players.stream();
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(name));
-            if (title != null) playerStream = playerStream.filter(p -> p.getTitle().contains(allParams.get(title)));
-            if (race != null) {
-                Race finalRace = race;
+            if ( (name = allParams.get("name")) != null) playerStream = playerStream.filter(p -> p.getName().contains(name));
+            if ( (title = allParams.get("title")) != null) playerStream = playerStream.filter(p -> p.getTitle().contains(title));
+            if ( allParams.get("race") != null) {
+                Race finalRace = Race.valueOf(allParams.get("race"));
                 playerStream = playerStream.filter(p -> p.getRace().equals(finalRace));
             }
-            if (profession != null) {
-                Profession finalProfession = profession;
+            if (allParams.get("profession") != null) {
+                Profession finalProfession = Profession.valueOf(allParams.get("profession"));
                 playerStream = playerStream.filter(p -> p.getProfession().equals(finalProfession));
             }
+            if (allParams.get("after") != null) {
+                String tmpString = allParams.get("after");
+                Date tmpDate = new Date(Long.parseLong(tmpString) + 1000);
+                playerStream = playerStream.filter(p -> p.getBirthday().after(tmpDate));
+            }
+            if (allParams.get("before") != null) {
+                String tmpString = allParams.get("before");
+                Date tmpDate = new Date(Long.parseLong(tmpString) + 1000);
+                playerStream = playerStream.filter(p -> p.getBirthday().before(tmpDate));
+            }
+
+            playerStream = playerStream.filter(p -> p.isBanned() == banned);
             /*if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
             if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
             if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
             if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));
-*/
+            if (name != null) playerStream = playerStream.filter(p -> p.getName().contains(allParams.get(name)));*/
+
 /*
             for (Player player:players){
                 for (String str:allParams.keySet()){
