@@ -56,52 +56,26 @@ public class PlayerController {
             Integer pageSize = 0;
 
             System.out.println("Allparams: " + allParams.entrySet()); // some debug
+            System.out.println("after: " + new Date(1104530400000L) + " , before: " + new Date(1230760800000L)); // some debug
 
             players.addAll(playerRepository.findAll()); // collect all records
 
-            // SORTING VIEW
-            order = allParams.get("order"); // get sorting order
-            if (order != null) // sort according to order received
-                switch (order) {
-                    case "ID":
-                        Collections.sort(players, Comparator.comparing(Player::getId));
-                        break;
-                    case "NAME":
-                        Collections.sort(players, Comparator.comparing(Player::getName));
-                        break;
-                    case "EXPERIENCE":
-                        Collections.sort(players, Comparator.comparing(Player::getExperience));
-                        break;
-                    case "BIRTHDAY":
-                        Collections.sort(players, Comparator.comparing(Player::getBirthday));
-                        break;
-                }
 
-            // FILTERING according to optional received params from allParams
+            // FILTERING
+            // according to optional received params from allParams
 
-/*            name = allParams.get("name");
-            title = allParams.get("title");*/
-//            if (allParams.get("race")!= null) race = Race.valueOf(allParams.get("race"));
-//            if (allParams.get("profession")!= null) profession = Profession.valueOf(allParams.get("profession"));
-/*            if (allParams.get("after") != null) after = Long.parseLong(allParams.get("after"));
-            if (allParams.get("before") != null) before = Long.parseLong(allParams.get("before"));
-//            banned = Boolean.parseBoolean(allParams.get("banned"));
-            if (allParams.get("minExperience") != null)
-                minExperience = Integer.parseInt(allParams.get("minExperience"));
-            if (allParams.get("maxExperience") != null)
-                maxExperience = Integer.parseInt(allParams.get("maxExperience"));
-            if (allParams.get("minLevel") != null) minLevel = Integer.parseInt(allParams.get("minLevel"));
-            if (allParams.get("maxLevel") != null) maxLevel = Integer.parseInt(allParams.get("maxLevel"));*/
             if (allParams.get("pageNumber") != null) pageNumber = Integer.parseInt(allParams.get("pageNumber"));
             else pageNumber = 0;
             if (allParams.get("pageSize") != null) pageSize = Integer.parseInt(allParams.get("pageSize"));
             else pageSize = 3;
 
             playerStream = players.stream();
-            if ((name = allParams.get("name")) != null)
+            if ((name = allParams.get("name")) != null) {
                 playerStream = playerStream.filter(p -> p.getName().contains(name));
-            if ((title = allParams.get("title")) != null)
+            }
+            if ((title = allParams.get("title")) != null) {
                 playerStream = playerStream.filter(p -> p.getTitle().contains(title));
+            }
             if (allParams.get("race") != null) {
                 Race finalRace = Race.valueOf(allParams.get("race"));
                 playerStream = playerStream.filter(p -> p.getRace().equals(finalRace));
@@ -124,24 +98,45 @@ public class PlayerController {
             if (allParams.get("minExperience") != null) playerStream = playerStream
                     .filter(p -> p.getExperience() >= Integer.parseInt(allParams.get("minExperience")));
             if (allParams.get("maxExperience") != null) playerStream = playerStream
-                    .filter(p -> p.getExperience() <= Integer.parseInt(allParams.get("minExperience")));
+                    .filter(p -> p.getExperience() <= Integer.parseInt(allParams.get("maxExperience")));
 
-            if (allParams.get("minLevel") != null)
+            if (allParams.get("minLevel") != null) {
                 playerStream = playerStream.filter(p -> p.getLevel() > Integer.parseInt(allParams.get("minLevel")));
-            if (allParams.get("maxLevel") != null)
+            }
+            if (allParams.get("maxLevel") != null) {
                 playerStream = playerStream.filter(p -> p.getLevel() < Integer.parseInt(allParams.get("maxLevel")));
-
+            }
 
             // PAGING
-
+            // split results on pages
             playerStream = playerStream.skip((long) (pageNumber) * pageSize);
             playerStream = playerStream.limit(pageSize);
 
             players = playerStream.collect(Collectors.toList());
+
+            // SORTING RESULT
+            order = allParams.get("order"); // get sorting order
+            if (order != null) // sort according to order received
+            {
+                switch (order) {
+                    case "ID":
+                        Collections.sort(players, Comparator.comparing(Player::getId));
+                        break;
+                    case "NAME":
+                        Collections.sort(players, Comparator.comparing(Player::getName));
+                        break;
+                    case "EXPERIENCE":
+                        Collections.sort(players, Comparator.comparing(Player::getExperience));
+                        break;
+                    case "BIRTHDAY":
+                        Collections.sort(players, Comparator.comparing(Player::getBirthday));
+                        break;
+                }
+            }
+
             if (players.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
-
             return new ResponseEntity<>(players, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
