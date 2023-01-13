@@ -11,7 +11,8 @@ public class Player {
     private static final AtomicInteger CLIENT_ID_HOLDER = new AtomicInteger();
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
     Long id;
     @Column(name = "name")
     String name;
@@ -64,7 +65,7 @@ public class Player {
         this.untilNextLevel = calculateUntilNextLvl(experience);
     }
 
-/*    public Player(Long id, String name, String title, Race race, Profession profession, Date birthday, boolean banned, Integer experience, Integer level, Integer untilNextLevel) {
+    public Player(Long id, String name, String title, Race race, Profession profession, Date birthday, boolean banned, Integer experience) {
         this.id = id;
         this.name = name;
         this.title = title;
@@ -73,9 +74,9 @@ public class Player {
         this.birthday = birthday;
         this.banned = banned;
         this.experience = experience;
-        this.level = level;
-        this.untilNextLevel = untilNextLevel;
-    }*/
+        this.level = calculateLevel(experience);
+        this.untilNextLevel = calculateUntilNextLvl(experience);
+    }
 
     public Integer calculateLevel(Integer experience){
         return (int)((Math.sqrt( 2500 + 200 * experience) - 50 ) / 100);
