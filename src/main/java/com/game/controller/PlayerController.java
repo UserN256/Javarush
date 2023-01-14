@@ -24,14 +24,15 @@ import org.springframework.web.servlet.HandlerMapping;
 
 import javax.servlet.http.HttpServletRequest;
 
-@CrossOrigin(origins = "http://localhost:8080")
-@RestController
-@RequestMapping("/")
+//@CrossOrigin(origins = "http://localhost:8080") // атавизм откуда-то
+@RestController // Говорим что это REST контроллер
+@RequestMapping("/") // зрим в корень
 public class PlayerController {
 
     @Autowired
     PlayerRepository playerRepository;
 
+    // ОСНОВНАЯ ОБРАБОТКА GET
     @GetMapping("/rest/players")
     public ResponseEntity<List<Player>> getAllPlayers(@RequestParam Map<String, String> allParams) {
         // allParams - if view sends us parameters like sort, order, etc.
@@ -109,12 +110,6 @@ public class PlayerController {
                 playerStream = playerStream.filter(p -> p.getLevel() < Integer.parseInt(allParams.get("maxLevel")));
             }
 
-            // PAGING
-            // split results on pages
-            playerStream = playerStream.skip((long) (pageNumber) * pageSize);
-            playerStream = playerStream.limit(pageSize);
-
-            players = playerStream.collect(Collectors.toList());
 
             // SORTING RESULT
             order = allParams.get("order"); // get sorting order
@@ -136,6 +131,13 @@ public class PlayerController {
                 }
             }
 
+            // PAGING
+            // split results on pages
+            playerStream = playerStream.skip((long) (pageNumber) * pageSize);
+            playerStream = playerStream.limit(pageSize);
+
+            players = playerStream.collect(Collectors.toList());
+
             if (players.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
@@ -146,10 +148,12 @@ public class PlayerController {
     }
 
 
+    // ОБРАБОТКА GET id
     @GetMapping("/rest/players/{id}")
     public ResponseEntity<Player> getPlayerById(@PathVariable("id") long id) {
         Optional<Player> playerData = playerRepository.findById(id);
 
+        if (id <1)  return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         if (playerData.isPresent()) {
             return new ResponseEntity<>(playerData.get(), HttpStatus.OK);
         } else {
@@ -157,6 +161,7 @@ public class PlayerController {
         }
     }
 
+    // ОБРАБОТКА POST
     @PostMapping("/rest/players")
     public ResponseEntity<Player> createPlayer(@RequestBody Player player) {
         Date dateLow = new Date(100, 01, 01);
@@ -164,6 +169,10 @@ public class PlayerController {
 
 
         try {
+            if (player.getId() == null && player.getName() == null && player.getTitle() == null
+                    && player.getRace() == null && player.getProfession() == null && player.getBirthday() == null
+                    && player.isBanned() == false && player.getExperience() == null && player.getLevel() == null
+                    && player.getUntilNextLevel() == null) return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             if (player == null || player.getBirthday().before(dateLow) || dateHi.before(player.getBirthday())
                     || player.getTitle().length() > 12)
                 return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -183,10 +192,12 @@ public class PlayerController {
         }
     }
 
+    // УДАЛЕНИЕ ПО id
     @PutMapping("/rest/players/{id}")
     public ResponseEntity<Player> updatePlayer(@PathVariable("id") long id, @RequestBody Player player) {
         Optional<Player> playerData = playerRepository.findById(id);
 
+        if (id <1)  return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         if (playerData.isPresent()) {
             Player _player = playerData.get();
             _player.setTitle(player.getTitle());
@@ -194,15 +205,17 @@ public class PlayerController {
             _player.setBanned(player.isBanned());
             return new ResponseEntity<>(playerRepository.save(_player), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @DeleteMapping("/rest/players/{id}")
     public ResponseEntity<HttpStatus> deletePlayer(@PathVariable("id") long id) {
         try {
+            if (id < 1 )return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            if (!playerRepository.existsById(id))return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             playerRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -219,6 +232,7 @@ public class PlayerController {
 
     }*/
 
+    // ПОДСЧЁТ КОЛИЧЕСТВА ЗАПИСЕЙ
     @GetMapping("/rest/players/count")
     public ResponseEntity<Integer> getSpecifiedPlayersCount(@RequestParam Map<String, String> allParams) {
         try {
@@ -266,7 +280,7 @@ public class PlayerController {
                 System.out.println("before: " + tmpDate);
                 playerStream = playerStream.filter(p -> p.getBirthday().before(tmpDate));
             }
-            if (allParams.get("banned") != null) playerStream = playerStream.filter(p -> p.isBanned() == banned);
+            if ( allParams.get("banned") != null) playerStream = playerStream.filter(p -> p.isBanned() == Boolean.parseBoolean(allParams.get("banned")));
             if (allParams.get("minExperience") != null) playerStream = playerStream
                     .filter(p -> p.getExperience() >= Integer.parseInt(allParams.get("minExperience")));
             if (allParams.get("maxExperience") != null) playerStream = playerStream
