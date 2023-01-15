@@ -138,9 +138,9 @@ public class PlayerController {
 
             players = playerStream.collect(Collectors.toList());
 
-            if (players.isEmpty()) {
+/*            if (players.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-            }
+            }*/
             return new ResponseEntity<>(players, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -171,7 +171,7 @@ public class PlayerController {
         try {
             if (player.getId() == null && player.getName() == null && player.getTitle() == null
                     && player.getRace() == null && player.getProfession() == null && player.getBirthday() == null
-                    && player.isBanned() == false && player.getExperience() == null && player.getLevel() == null
+                    && !player.isBanned() && player.getExperience() == null && player.getLevel() == null
                     && player.getUntilNextLevel() == null) return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             if (player == null || player.getBirthday().before(dateLow) || dateHi.before(player.getBirthday())
                     || player.getTitle().length() > 12)
@@ -179,36 +179,73 @@ public class PlayerController {
             if ((player.getExperience() < 0) || (player.getExperience() > 10000000))
                 return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             if (player.getName().equals("")) return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-            Long res = playerRepository.count();
+            long res = playerRepository.count();
 //            Long id = player.getId();
 //            player.setId(res + 1);
+            Player playerForSave = new Player(res + 1, player.getName(), player.getTitle(), player.getRace(),
+                    player.getProfession(), player.getBirthday(), player.isBanned(), player.getExperience());
+            playerForSave.setLevel(playerForSave.calculateLevel(player.getExperience()));
+            playerForSave.setUntilNextLevel(playerForSave.calculateUntilNextLvl(player.getExperience()));
             Player _player = playerRepository
 //                    .save(new Player(player.getTitle(), player.getName(), false));
-                    .save(new Player(res + 1, player.getName(), player.getTitle(), player.getRace(),
-                            player.getProfession(), player.getBirthday(), player.isBanned(), player.getExperience()));
+                    .save(playerForSave);
             return new ResponseEntity<>(_player, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // УДАЛЕНИЕ ПО id
-    @PutMapping("/rest/players/{id}")
+    // POST ОБНОВЛЕНИЕ ПО id
+    @PostMapping("/rest/players/{id}")
     public ResponseEntity<Player> updatePlayer(@PathVariable("id") long id, @RequestBody Player player) {
         Optional<Player> playerData = playerRepository.findById(id);
 
         if (id <1)  return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+
         if (playerData.isPresent()) {
-            Player _player = playerData.get();
-            _player.setTitle(player.getTitle());
-            _player.setName(player.getName());
+            Player _player = playerData.get(); // player from Database
+            // check for empty body
+            if (player.getId() == null && player.getName() == null && player.getTitle() == null
+                    && player.getRace() == null && player.getProfession() == null && player.getBirthday() == null
+                    && !player.isBanned() && player.getExperience() == null && player.getLevel() == null
+                    && player.getUntilNextLevel() == null) return new ResponseEntity<>(null, HttpStatus.OK);
+
+            // update player from database
+            String tmpName = player.getName() != null ? player.getName() : _player.getName();
+            _player.setName(tmpName);
+
+            String tmpTitle = player.getTitle() != null? player.getTitle() : _player.getTitle();
+            _player.setTitle(tmpTitle);
+
+            Race tmpRace = player.getRace() != null ? player.getRace() : _player.getRace();
+            _player.setRace(tmpRace);
+
+            Profession tmpProfession = player.getProfession() != null ? player.getProfession() : _player.getProfession();
+            _player.setProfession(tmpProfession);
+            Date tmpDate;
+            if (player.getBirthday() != null) {
+                tmpDate = player.getBirthday();
+                if (tmpDate.before(new Date(1970 - 1900, 01, 01))) // check negative Birthdate
+                    return new ResponseEntity<>(playerRepository.save(_player), HttpStatus.BAD_REQUEST);
+                _player.setBirthday(tmpDate);
+            }
             _player.setBanned(player.isBanned());
+            int tmpExp = player.getExperience();
+            if ( (tmpExp < 0) || (tmpExp > 10000000)) // check Experience bounds
+                return new ResponseEntity<>(playerRepository.save(_player), HttpStatus.BAD_REQUEST);
+            _player.setExperience(tmpExp);
+            Integer tmpLevel = player.calculateLevel(tmpExp);
+            _player.setLevel(tmpLevel);
+            _player.setUntilNextLevel(_player.calculateUntilNextLvl(tmpExp));
+
             return new ResponseEntity<>(playerRepository.save(_player), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
+    // УДАЛЕНИЕ ПО id
     @DeleteMapping("/rest/players/{id}")
     public ResponseEntity<HttpStatus> deletePlayer(@PathVariable("id") long id) {
         try {
@@ -232,7 +269,7 @@ public class PlayerController {
 
     }*/
 
-    // ПОДСЧЁТ КОЛИЧЕСТВА ЗАПИСЕЙ
+    // ПОДСЧЁТ КОЛИЧЕСТВА ЗАПИСЕЙ GET .../count
     @GetMapping("/rest/players/count")
     public ResponseEntity<Integer> getSpecifiedPlayersCount(@RequestParam Map<String, String> allParams) {
         try {
@@ -307,5 +344,4 @@ public class PlayerController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

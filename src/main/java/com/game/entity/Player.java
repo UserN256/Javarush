@@ -83,7 +83,7 @@ public class Player {
     }
 
     public Integer calculateUntilNextLvl(Integer experience){
-        return 50 * (this.level + 1) * (this.level + 2) - this.experience;
+        return (50 * (this.level + 1) * (this.level + 2)) - this.experience;
     }
 
     public Long getId() {
@@ -114,17 +114,17 @@ public class Player {
         return race;
     }
 
-//    public void setRace(Race race) {
-//        this.race = race;
-//    }
+    public void setRace(Race race) {
+        this.race = race;
+    }
 
     public Profession getProfession() {
         return profession;
     }
 
-//    public void setProfession(Profession profession) {
-//        this.profession = profession;
-//    }
+    public void setProfession(Profession profession) {
+        this.profession = profession;
+    }
 
     public Date getBirthday() {
         return birthday;
