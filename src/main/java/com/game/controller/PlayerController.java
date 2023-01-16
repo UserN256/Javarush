@@ -56,7 +56,7 @@ public class PlayerController {
             Integer pageNumber = 0;
             Integer pageSize = 0;
 
-            System.out.println("Allparams: " + allParams.entrySet()); // some debug
+//            System.out.println("Allparams: " + allParams.entrySet()); // some debug
 //            System.out.println("after: " + new Date(1041372000000L) + " , before: " + new Date(1136066400000L)); // some debug
 
             players.addAll(playerRepository.findAll()); // collect all records
@@ -88,13 +88,13 @@ public class PlayerController {
             if (allParams.get("after") != null) {
                 String tmpString = allParams.get("after");
                 Date tmpDate = new Date(Long.parseLong(tmpString) + 1000);
-                System.out.println("after: " + tmpDate);
+//                System.out.println("after: " + tmpDate);
                 playerStream = playerStream.filter(p -> p.getBirthday().after(tmpDate));
             }
             if (allParams.get("before") != null) {
                 String tmpString = allParams.get("before");
                 Date tmpDate = new Date(Long.parseLong(tmpString) + 1000);
-                System.out.println("before: " + tmpDate);
+//                System.out.println("before: " + tmpDate);
                 playerStream = playerStream.filter(p -> p.getBirthday().before(tmpDate));
             }
             if (allParams.get("banned") != null) playerStream = playerStream.filter(p -> p.isBanned() == banned);
@@ -153,7 +153,7 @@ public class PlayerController {
     public ResponseEntity<Player> getPlayerById(@PathVariable("id") long id) {
         Optional<Player> playerData = playerRepository.findById(id);
 
-        if (id <1)  return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (id < 1) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         if (playerData.isPresent()) {
             return new ResponseEntity<>(playerData.get(), HttpStatus.OK);
         } else {
@@ -200,7 +200,7 @@ public class PlayerController {
     public ResponseEntity<Player> updatePlayer(@PathVariable("id") long id, @RequestBody Player player) {
         Optional<Player> playerData = playerRepository.findById(id);
 
-        if (id <1)  return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        if (id < 1) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
 
         if (playerData.isPresent()) {
@@ -209,13 +209,13 @@ public class PlayerController {
             if (player.getId() == null && player.getName() == null && player.getTitle() == null
                     && player.getRace() == null && player.getProfession() == null && player.getBirthday() == null
                     && !player.isBanned() && player.getExperience() == null && player.getLevel() == null
-                    && player.getUntilNextLevel() == null) return new ResponseEntity<>(null, HttpStatus.OK);
+                    && player.getUntilNextLevel() == null) return new ResponseEntity<>(_player, HttpStatus.OK);
 
             // update player from database
             String tmpName = player.getName() != null ? player.getName() : _player.getName();
             _player.setName(tmpName);
 
-            String tmpTitle = player.getTitle() != null? player.getTitle() : _player.getTitle();
+            String tmpTitle = player.getTitle() != null ? player.getTitle() : _player.getTitle();
             _player.setTitle(tmpTitle);
 
             Race tmpRace = player.getRace() != null ? player.getRace() : _player.getRace();
@@ -231,13 +231,16 @@ public class PlayerController {
                 _player.setBirthday(tmpDate);
             }
             _player.setBanned(player.isBanned());
-            int tmpExp = player.getExperience();
-            if ( (tmpExp < 0) || (tmpExp > 10000000)) // check Experience bounds
-                return new ResponseEntity<>(playerRepository.save(_player), HttpStatus.BAD_REQUEST);
-            _player.setExperience(tmpExp);
-            Integer tmpLevel = player.calculateLevel(tmpExp);
-            _player.setLevel(tmpLevel);
-            _player.setUntilNextLevel(_player.calculateUntilNextLvl(tmpExp));
+            Integer tmpExp = player.getExperience();
+            if (tmpExp != null) {
+                tmpExp = player.getExperience();
+                if ((tmpExp < 0) || (tmpExp > 10000000)) // check Experience bounds
+                    return new ResponseEntity<>(playerRepository.save(_player), HttpStatus.BAD_REQUEST);
+                _player.setExperience(tmpExp);
+                Integer tmpLevel = player.calculateLevel(tmpExp);
+                _player.setLevel(tmpLevel);
+                _player.setUntilNextLevel(_player.calculateUntilNextLvl(tmpExp));
+            }
 
             return new ResponseEntity<>(playerRepository.save(_player), HttpStatus.OK);
         } else {
@@ -249,8 +252,8 @@ public class PlayerController {
     @DeleteMapping("/rest/players/{id}")
     public ResponseEntity<HttpStatus> deletePlayer(@PathVariable("id") long id) {
         try {
-            if (id < 1 )return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            if (!playerRepository.existsById(id))return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            if (id < 1) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            if (!playerRepository.existsById(id)) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             playerRepository.deleteById(id);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
@@ -283,7 +286,7 @@ public class PlayerController {
             String title;
             Boolean banned = false;
 
-            System.out.println("Allparams from count: " + allParams.entrySet()); // some debug
+//            System.out.println("Allparams from count: " + allParams.entrySet()); // some debug
 
             players.addAll(playerRepository.findAll()); // collect all records
 
@@ -308,16 +311,17 @@ public class PlayerController {
             if (allParams.get("after") != null) {
                 String tmpString = allParams.get("after");
                 Date tmpDate = new Date(Long.parseLong(tmpString) + 1000);
-                System.out.println("after: " + tmpDate);
+//                System.out.println("after: " + tmpDate);
                 playerStream = playerStream.filter(p -> p.getBirthday().after(tmpDate));
             }
             if (allParams.get("before") != null) {
                 String tmpString = allParams.get("before");
                 Date tmpDate = new Date(Long.parseLong(tmpString) + 1000);
-                System.out.println("before: " + tmpDate);
+//                System.out.println("before: " + tmpDate);
                 playerStream = playerStream.filter(p -> p.getBirthday().before(tmpDate));
             }
-            if ( allParams.get("banned") != null) playerStream = playerStream.filter(p -> p.isBanned() == Boolean.parseBoolean(allParams.get("banned")));
+            if (allParams.get("banned") != null)
+                playerStream = playerStream.filter(p -> p.isBanned() == Boolean.parseBoolean(allParams.get("banned")));
             if (allParams.get("minExperience") != null) playerStream = playerStream
                     .filter(p -> p.getExperience() >= Integer.parseInt(allParams.get("minExperience")));
             if (allParams.get("maxExperience") != null) playerStream = playerStream
